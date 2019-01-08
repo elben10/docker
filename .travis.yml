@@ -5,8 +5,9 @@ services:
   - docker
   
 env:
-  - DOCKER_IMAGE=elben10/docker
-  - GIT_LATEST_COMMIT=$(git rev-parse HEAD)
+  global:
+    - DOCKER_IMAGE=elben10/docker
+    - GIT_LATEST_COMMIT=$(git rev-parse HEAD)
   
 before_install:
   - bash .travis.sh
