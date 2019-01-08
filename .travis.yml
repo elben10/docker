@@ -1,0 +1,21 @@
+sudo: required
+
+services:
+  - docker
+  
+env:
+  - GIT_LATEST_COMMIT=$(git rev-parse HEAD)
+  
+before_install:
+  - bash .travis.sh
+  
+script:
+  - echo $LATEST_COMMIT
+  
+after_success:
+  - if [[ "$TRAVIS_BRANCH" == "master" ]]; then
+      docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ;
+    fi
+    
+notifications:
+  email: false
