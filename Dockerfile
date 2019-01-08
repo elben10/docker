@@ -8,6 +8,7 @@ RUN apt-get update && \
     apt-get install -yq --no-install-recommends \
     fonts-dejavu \
     gcc \
+    git \
     gfortran \
     libapparmor1 \
     libedit2 \
