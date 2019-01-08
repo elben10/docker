@@ -5,17 +5,19 @@ services:
   - docker
   
 env:
+  - DOCKER_IMAGE=elben10/docker
   - GIT_LATEST_COMMIT=$(git rev-parse HEAD)
   
 before_install:
   - bash .travis.sh
   
 script:
-  - echo $GIT_LATEST_COMMIT
+  - docker build -t $DOCKER_IMAGE:$GIT_LATEST_COMMIT .
   
 after_success:
   - if [[ "$TRAVIS_BRANCH" == "master" ]]; then
       echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin;
+      docker push $DOCKER_IMAGE
     fi
     
 notifications:
