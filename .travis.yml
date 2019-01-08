@@ -11,7 +11,7 @@ before_install:
   - bash .travis.sh
   
 script:
-  - echo $LATEST_COMMIT
+  - echo $GIT_LATEST_COMMIT
   
 after_success:
   - if [[ "$TRAVIS_BRANCH" == "master" ]]; then
