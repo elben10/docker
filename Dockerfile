@@ -56,7 +56,7 @@ RUN conda install --quiet --yes -c conda-forge -c QuantStack -c krinsman \
     'r-htmltools=0.3*' \
     'r-sparklyr=0.9*' \
     'r-htmlwidgets=1.2*' \
-    'r-hexbin=1.27*' \
+    'r-hexbin=1.27*' 
     
 # Install pip dependencies
 RUN pip install \
