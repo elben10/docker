@@ -6,7 +6,7 @@ services:
   
 env:
   global:
-    - DOCKER_IMAGE=elben10/docker
+    - DOCKER_IMAGE=elben10/jupyterlab-docker
     - GIT_LATEST_COMMIT=$(git rev-parse HEAD)
   
 before_install:
