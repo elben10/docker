@@ -63,6 +63,7 @@ RUN conda install --quiet --yes -c conda-forge -c QuantStack -c krinsman \
     'r-htmlwidgets=1.2*' \
     'r-hexbin=1.27*' \
     # Others
+    'beakerx' \
     'go' \
     'pkg-config'
     
