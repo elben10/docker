@@ -2,6 +2,9 @@ FROM jupyter/base-notebook:latest
 
 USER root
 
+ENV GOPATH=$HOME/go
+ENV PATH=$PATH:$GOPATH/bin
+
 # Install System dependencies
 RUN apt-get update && \
     apt-get -yq dist-upgrade && \
@@ -13,6 +16,7 @@ RUN apt-get update && \
     libapparmor1 \
     libedit2 \
     libssl1.0.0 \
+    libzmq3-dev \
     lsb-release \
     psmisc \
     tzdata && \
@@ -57,7 +61,10 @@ RUN conda install --quiet --yes -c conda-forge -c QuantStack -c krinsman \
     'r-htmltools=0.3*' \
     'r-sparklyr=0.9*' \
     'r-htmlwidgets=1.2*' \
-    'r-hexbin=1.27*' 
+    'r-hexbin=1.27*' \
+    # Others
+    'go' \
+    'pkg-config'
     
 # Install pip dependencies
 RUN pip install \
@@ -68,15 +75,22 @@ RUN pip install \
     git+https://github.com/elben10/jupyter-rsession-proxy
     
 # Install extensions
-RUN jupyter labextension install @jupyterlab/google-drive && \
-    jupyter labextension install @jupyterlab/git && \
-    jupyter labextension install @jupyterlab/github && \
-    jupyter labextension install @jupyterlab/latex && \
-    jupyter labextension install @jupyterlab/toc && \
-    jupyter labextension install jupyterlab_bokeh && \
-    jupyter labextension install jupyterlab-server-proxy
+ RUN jupyter labextension install @jupyterlab/google-drive && \
+     jupyter labextension install @jupyterlab/git && \
+     jupyter labextension install @jupyterlab/github && \
+     jupyter labextension install @jupyterlab/latex && \
+     jupyter labextension install @jupyterlab/toc && \
+     jupyter labextension install jupyterlab_bokeh && \
+     jupyter labextension install jupyterlab-server-proxy
     
 # Enable server extensions
 RUN jupyter serverextension enable --py jupyterlab_git && \
     jupyter serverextension enable --sys-prefix jupyterlab_github && \
     jupyter serverextension enable --sys-prefix jupyterlab_latex
+
+
+# Add kernels
+RUN python -m bash_kernel.install && \
+    go get -u github.com/gopherdata/gophernotes && \
+    mkdir -p ~/.local/share/jupyter/kernels/gophernotes && \
+    cp $GOPATH/src/github.com/gopherdata/gophernotes/kernel/* ~/.local/share/jupyter/kernels/gophernotes
