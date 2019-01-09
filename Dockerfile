@@ -23,6 +23,29 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+# Julia dependencies
+# install Julia packages in /opt/julia instead of $HOME
+ENV JULIA_DEPOT_PATH=/opt/julia
+ENV JULIA_PKGDIR=/opt/julia
+ENV JULIA_VERSION=1.0.3
+ENV JULIA_SHA256="362ba867d2df5d4a64f824e103f19cffc3b61cf9d5a9066c657f1c5b73c87117"
+
+RUN mkdir /opt/julia-${JULIA_VERSION} && \
+    cd /tmp && \
+    wget -q https://julialang-s3.julialang.org/bin/linux/x64/`echo ${JULIA_VERSION} | cut -d. -f 1,2`/julia-${JULIA_VERSION}-linux-x86_64.tar.gz && \
+    echo "${JULIA_SHA256} *julia-${JULIA_VERSION}-linux-x86_64.tar.gz" | sha256sum -c - && \
+    tar xzf julia-${JULIA_VERSION}-linux-x86_64.tar.gz -C /opt/julia-${JULIA_VERSION} --strip-components=1 && \
+    rm /tmp/julia-${JULIA_VERSION}-linux-x86_64.tar.gz
+RUN ln -fs /opt/julia-*/bin/julia /usr/local/bin/julia
+
+# Show Julia where conda libraries are \
+RUN mkdir /etc/julia && \
+    echo "push!(Libdl.DL_LOAD_PATH, \"$CONDA_DIR/lib\")" >> /etc/julia/juliarc.jl && \
+    # Create JULIA_PKGDIR \
+    mkdir $JULIA_PKGDIR && \
+    chown $NB_USER $JULIA_PKGDIR && \
+    fix-permissions $JULIA_PKGDIR
+
 # Install Rstudio Server
 RUN export RSTUDIO_PKG=rstudio-server-$(wget -qO- https://download2.rstudio.org/current.ver)-amd64.deb && \
     wget -q http://download2.rstudio.org/${RSTUDIO_PKG} && \
@@ -41,8 +64,8 @@ RUN conda update --all --yes && \
     
 # Conda dependencies
 RUN conda install --quiet --yes -c conda-forge -c QuantStack -c krinsman \
-    # Python
-    # R
+    #Python
+    #R
     'r-base=3.5.1' \
     'r-irkernel=0.8*' \
     'r-plyr=1.8*' \
@@ -62,7 +85,8 @@ RUN conda install --quiet --yes -c conda-forge -c QuantStack -c krinsman \
     'r-sparklyr=0.9*' \
     'r-htmlwidgets=1.2*' \
     'r-hexbin=1.27*' \
-    # Others
+    #Others
+    'beakerx' \
     'go' \
     'pkg-config'
     
@@ -74,15 +98,6 @@ RUN pip install \
     jupyterlab_latex \
     git+https://github.com/elben10/jupyter-rsession-proxy
     
-# Install extensions
- RUN jupyter labextension install @jupyterlab/google-drive && \
-     jupyter labextension install @jupyterlab/git && \
-     jupyter labextension install @jupyterlab/github && \
-     jupyter labextension install @jupyterlab/latex && \
-     jupyter labextension install @jupyterlab/toc && \
-     jupyter labextension install jupyterlab_bokeh && \
-     jupyter labextension install jupyterlab-server-proxy
-    
 # Enable server extensions
 RUN jupyter serverextension enable --py jupyterlab_git && \
     jupyter serverextension enable --sys-prefix jupyterlab_github && \
@@ -93,4 +108,23 @@ RUN jupyter serverextension enable --py jupyterlab_git && \
 RUN python -m bash_kernel.install && \
     go get -u github.com/gopherdata/gophernotes && \
     mkdir -p ~/.local/share/jupyter/kernels/gophernotes && \
-    cp $GOPATH/src/github.com/gopherdata/gophernotes/kernel/* ~/.local/share/jupyter/kernels/gophernotes
+    cp $GOPATH/src/github.com/gopherdata/gophernotes/kernel/* ~/.local/share/jupyter/kernels/gophernotes && \
+    julia -e 'import Pkg; Pkg.update()' && \ 
+    julia -e 'import Pkg; Pkg.add("IJulia")' && \
+    julia -e 'using IJulia' && \
+    # move kernelspec out of home \
+    mv $HOME/.local/share/jupyter/kernels/julia* $CONDA_DIR/share/jupyter/kernels/ && \
+    chmod -R go+rx $CONDA_DIR/share/jupyter && \
+    rm -rf $HOME/.local && \
+    fix-permissions $JULIA_PKGDIR $CONDA_DIR/share/jupyter && \
+    # remove work folder
+    rm -rf work
+
+# Install extensions
+RUN jupyter labextension install @jupyterlab/google-drive && \
+    jupyter labextension install @jupyterlab/git && \
+    jupyter labextension install @jupyterlab/github && \
+    jupyter labextension install @jupyterlab/latex && \
+    jupyter labextension install @jupyterlab/toc && \
+    jupyter labextension install jupyterlab_bokeh && \
+    jupyter labextension install jupyterlab-server-proxy
